@@ -20,27 +20,33 @@
             [] Second
             [] Third
 
-            Parametro 1:
-            parametros = [1, 2, 3]
-            opções = {
-                0: Nenhuma
-                2: Opener
-                3: Off
-                4: OpenerOff
-            }
-                * Cada parametro pode ter apenas 1 opção
-                * Todos parametros podem ter a opção 0
-                * No maxímo 1 parametro pode ter a opção 1
-                * No máximo 2 parametros podem ter a opção 2
-                * O parametro 3 represanta os parametros 1 e 2 ao mesmo tempo.
-                1: opção
-                1: opção
-                2: opção
+            Parte 1:
+                parâmetros = [1, 2, 3, 4, 5]
+                lp = 4
+                opções = {
+                    0: Nenhuma
+                    1: Opener
+                    2: Off
+                    3: OpenerOff
+                }
+                    * Cada parâmetro pode ter apenas 1 opção.
+                    * Todos parâmetros podem ter a opção 0.
+                    * Pode existir apenas 1 parâmetro com a opção 1.
+                    * Pode existir apenas 1 parâmetro com a opção 3.
+                    * Os parâmetros 1 e 3 não podem coexistir.
+                    
+                    par 1: opções: (0, 1, 2, 3)
+                    par 2: opções: (0, 1, 2, 3)
+                    par 3: opções: (0, 1, 2, 3)
+                    par 4: opções: (0, 1, 2, 3)
+                    par 5: opções: (0, 1, 2, 3)
 
-            Parametro 2:
-                0: [0, 1, 2, 3]
-                1: [0, 1, 2, 3]
-                2: [0, 1, 2, 3]
+            Parte 2:
+                par 1: opções: (0, 1, 2, 3)
+                par 2: opções: (0, 1, 2, 3)
+                par 3: opções: (0, 1, 2, 3)
+                par 4: opções: (0, 1, 2, 3)
+                par 5: opções: (0, 1, 2, 3)
 
 
 # =============================== [ Treino ] =============================== #
@@ -66,6 +72,28 @@ import numpy as np
 import itertools
 import time
 
+# ----------------------------------------------------------------------------------------------------------- #
+
+def myPrint_01(iterable, group_size=5):
+    """
+    Imprime elementos do iterável em grupos de tamanho especificado.
+
+    Args:
+        iterable: Um iterável contendo os elementos a serem impressos.
+        group_size: Um inteiro representando o número de elementos por grupo.
+    """
+    # Converte o iterável em uma lista para permitir o fatiamento
+    iterable_list = list(iterable)
+    
+    # Itera sobre a lista em passos de 'group_size'
+    for i in range(0, len(iterable_list), group_size):
+        # Fatia a lista para obter o grupo atual
+        group = iterable_list[i:i + group_size]
+        # Imprime o grupo
+        print(group)
+
+# ----------------------------------------------------------------------------------------------------------- #
+
 def generate_combinations(parameters):
     values = []
 
@@ -83,7 +111,7 @@ def generate_combinations(parameters):
 
     return combinations
 
-parameters_combinations = {
+parCombination = {
     'skill': {
         'extend': {'type': int, 'range': (0, 1), 'increment': 1},
         'countdown': {'type': int, 'range': (0, 5), 'increment': 1},
@@ -94,38 +122,69 @@ parameters_combinations = {
         1: {'type': int, 'range': (0, 1), 'increment': 1},
         2: {'type': int, 'range': (0, 3), 'increment': 1},
         3: {'type': int, 'range': (0, 3), 'increment': 1},
-        4: {'type': int, 'range': (0, 3), 'increment': 1}
+        4: {'type': int, 'range': (0, 3), 'increment': 1},
+        5: {'type': int, 'range': (0, 3), 'increment': 1}
     }
 }
 
-def preSetIsValid(combinations, lenght):
-    isValid = []
-    l = lenght - 1
-    for comb in combinations:
-        c = comb[:l]
-        if c.count(1) > 1 or c.count(2) > l or c.count(3) > l:
-            continue
-        if 1 in c and 3 in c:
-            continue
-        isValid.append(c)
-    return isValid
+def validPresets():
+    combinations = generate_combinations(parCombination['preset'].values())
+    isValid = set()
+    gabarito_01 = {
+        (0,),
+            (0, 0),
+                (0, 0, 0),
+                    (0, 0, 0, 0), (0, 0, 0, 1), (0, 0, 0, 2), (0, 0, 0, 3),
+                (0, 0, 1),
+                    (0, 0, 1, 0), (0, 0, 1, 2),
+                (0, 0, 2),
+                    (0, 0, 2, 0), (0, 0, 2, 1), (0, 0, 2, 2), (0, 0, 2, 3),
+                (0, 0, 3),
+                    (0, 0, 3, 0), (0, 0, 3, 2),
+            (0, 1),
+                (0, 1, 0),
+                    (0, 1, 0, 0), (0, 1, 0, 2),
+                (0, 1, 2),
+                    (0, 1, 2, 0), (0, 1, 2, 2),
+            (0, 2),
+                (0, 2, 0),
+                    (0, 2, 0, 0), (0, 2, 0, 1), (0, 2, 0, 2), (0, 2, 0, 3),
+                (0, 2, 1),
+                    (0, 2, 1, 0), (0, 2, 1, 2),
+                (0, 2, 2),
+                    (0, 2, 2, 0), (0, 2, 2, 1), (0, 2, 2, 2), (0, 2, 2, 3),
+                (0, 2, 3),
+                    (0, 2, 3, 0), (0, 2, 3, 2),
+            (0, 3),
+                (0, 3, 0),
+                    (0, 3, 0, 0), (0, 3, 0, 2),
+                (0, 3, 2),
+                    (0, 3, 2, 0), (0, 3, 2, 2),
+        (1,),
+            (1, 0),
+                (1, 0, 0),
+                    (1, 0, 0, 0), (1, 0, 0, 2),
+                (1, 0, 2),
+                    (1, 0, 2, 0), (1, 0, 2, 2),
+            (1, 2),
+                (1, 2, 0),
+                    (1, 2, 0, 0), (1, 2, 0, 2),
+                (1, 2, 2),
+                    (1, 2, 2, 0), (1, 2, 2, 2)
+    }
+    lengths = [1, 2, 3, 4, 5]
+    print(len(gabarito_01))
+    for l in lengths:
+        for comb in combinations:
+            c = comb[:l]
+            if c.count(1) > 1 or c.count(3) > 1:
+                continue
+            if 1 in c and 3 in c:
+                continue
+            isValid.add(tuple(c))  # Adicionar como tupla para garantir unicidade
+        sorted_list = sorted(list(isValid))
+    return sorted_list
 
+preSetsComb = validPresets()
 
-skillsValues = generate_combinations(parameters_combinations['preset'].values())
-preSetsValues = {
-    1: preSetIsValid(skillsValues, 2),
-    2: preSetIsValid(skillsValues, 3),
-    3: preSetIsValid(skillsValues, 4),
-    4: preSetIsValid(skillsValues, 5)
-}
-
-for r in result:
-    print(r)
-    time.sleep(0.1)
-"""
-                * Cada parametro pode ter apenas 1 opção
-                * Todos parametros podem ter a opção 0
-                * No maxímo 1 parametro pode ter a opção 1
-                * No máximo 2 parametros podem ter a opção 2
-                * O parametro 3 represanta os parametros 1 e 2 ao mesmo tempo.
-"""
+myPrint_01(preSetsComb, 7)
