@@ -1,4 +1,38 @@
 """
+# ================================ [ Ideia ] ================================ #
+    * No jogo Raid: Shadow Legends, saber como montar e ajustar um time é muito vantajoso. Tendo isso em vista,
+    pretendemos desenvolver uma rede neural capaz de nos auxiliar nesse aspecto do jogo.
+    *Entradas: 
+        * Velocidade do Boss
+        * Para cada herói a rede neural deve receber:
+            * 1, 2, 3 ou 4 Skills.
+            * 1 Preset, que indica a ordem que as skills serão usadas.
+            * 1 Occurrence, que indica quantas vezes o herói deverá agir antes do Boss atacar no turno.
+    * Para cada herói a rede neural deve fornecer como saída:
+        * Velocidades verdadeiras necessárias para que a Occurrence seja cumprida.
+
+# ============================ [ Planejamento ] ============================= #
+1. [ ] Criar um jogo que simule as regras do Raid.
+2. [ ] Criar DataBase com informações turno a turno de uma partida.
+    ** Detalhes:
+        * Um turno termina quando o Boss ataca.
+    [ ] Criar Skill genérica.
+        [x] Criar DabaBase com todas combinações utilizadas nas Skills genéricas.
+    [ ] Criar Preset.
+        [ ] Criar DataBase com todas combinações utilizadas nos Presets.
+
+3. [ ] Criar uma função capaz de definir se uma partida cumpre ou não a ocurrence definida.
+
+
+* criar recurso que aplique esses recursos na rede neural
+* em cada turno da rede neural ela pode executar tais acoes:
+1. ver o resultado dos proximo turno(-0.5)
+2. Reiniciar a corrida porem alterando os valores que inseriu. Futurmente alterando tambem os presets.(-1.0)
+* -1.0 e -0.5 sao subtraidos da pontuacao dela.
+* cada simulacao inicia com 10 pontos.
+* em cada turno, satisfazendo a "meta" ela recebe +1.0
+* em cada grupo de teste, aqueles com mais pontos serao replicados, os outros excluidos.
+* talvez sejs necesserio outra ia pra dar suporte a isso.
 # ============================= [ Informações ] ============================= #
 # Turn Meter Max: 100
 # Turn Meter Fill Rate: 0.07
@@ -29,17 +63,18 @@
                     2: Off
                     3: OpenerOff
                 }
-                    * Cada parâmetro pode ter apenas 1 opção.
-                    * Todos parâmetros podem ter a opção 0.
-                    * Pode existir apenas 1 parâmetro com a opção 1.
-                    * Pode existir apenas 1 parâmetro com a opção 3.
-                    * Os parâmetros 1 e 3 não podem coexistir.
+
+                * Cada parâmetro pode ter apenas 1 opção.
+                * Todos parâmetros podem ter a opção 0.
+                * Pode existir apenas 1 parâmetro com a opção 1.
+                * Pode existir apenas 1 parâmetro com a opção 3.
+                * Os parâmetros 1 e 3 não podem coexistir.
                     
-                    par 1: opções: (0, 1, 2, 3)
-                    par 2: opções: (0, 1, 2, 3)
-                    par 3: opções: (0, 1, 2, 3)
-                    par 4: opções: (0, 1, 2, 3)
-                    par 5: opções: (0, 1, 2, 3)
+                par 1: opções: (0, 1, 2, 3)
+                par 2: opções: (0, 1, 2, 3)
+                par 3: opções: (0, 1, 2, 3)
+                par 4: opções: (0, 1, 2, 3)
+                par 5: opções: (0, 1, 2, 3)
 
             Parte 2:
                 par 1: opções: (0, 1, 2, 3)
