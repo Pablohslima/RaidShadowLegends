@@ -5,14 +5,14 @@
     *Entradas: 
         * Velocidade do Boss
         * Para cada herói a rede neural deve receber:
-            * 1, 2, 3 ou 4 Skills.
+            * 5 Skills.
             * 1 Preset, que indica a ordem que as skills serão usadas.
             * 1 Occurrence, que indica quantas vezes o herói deverá agir antes do Boss atacar no turno.
     * Para cada herói a rede neural deve fornecer como saída:
         * Velocidades verdadeiras necessárias para que a Occurrence seja cumprida.
 
 # ============================ [ Planejamento ] ============================= #
-1. [ ] Criar um jogo que simule as regras do Raid.
+1. [ ] Criar uma simulação do jogo.
 2. [ ] Criar DataBase com informações turno a turno de uma partida.
     ** Detalhes:
         * Um turno termina quando o Boss ataca.
@@ -40,25 +40,29 @@
 # Tick = Vel/TMT, exemplo: Vel == 190 Tick = 190/1428.57143 == 0.132299
 
 # ============================== [ Entradas ] ============================== #
-    [] Herois
-        [] Base Speed (80-150)
-        [] Skills (3) -> 4788
-            [] Extended
-            [] Rate (0-90)(%5)
-            [] Turn Meter Fill (5-100)(5%) 
-            [] Countdown (1-5)
-        [] Preset (3)
-            [] Opener
-            [] Off
-            [] First
-            [] Second
-            [] Third
+    [ ] Herois
+        [ ] Base Speed (80-150)
+        [ ] Skills (3) -> 4788
+            [ ] Extended
+            [ ] Rate (0-90)(%5)
+            [ ] Turn Meter Fill (5-100)(5%) 
+            [ ] Countdown (1-5)
+        [ ] Preset: inits + orders
+            [ ] None
+            [ ] Opener
+            [ ] Off
+            [ ] OpenerOff
+            [ ] First
+            [ ] Second
+            [ ] Third
+            [ ] Forth
+            [ ] Fifth
 
-            Parte 1:
+            inits:
                 parâmetros = [1, 2, 3, 4, 5]
                 lp = 4
                 opções = {
-                    0: Nenhuma
+                    0: Free
                     1: Opener
                     2: Off
                     3: OpenerOff
@@ -76,12 +80,26 @@
                 par 4: opções: (0, 1, 2, 3)
                 par 5: opções: (0, 1, 2, 3)
 
-            Parte 2:
-                par 1: opções: (0, 1, 2, 3)
-                par 2: opções: (0, 1, 2, 3)
-                par 3: opções: (0, 1, 2, 3)
-                par 4: opções: (0, 1, 2, 3)
-                par 5: opções: (0, 1, 2, 3)
+            orders:
+                parâmetros = [1, 2, 3, 4, 5]
+                opções = [1, 2, 3, 4, 5]
+
+                * Cada parâmetro pode ter apenas 1 opção.
+                * Todas opções devem ser diferentes.
+
+                par 1: opções: (1, 2, 3, 4, 5)
+                par 2: opções: (1, 2, 3, 4, 5)
+                par 3: opções: (1, 2, 3, 4, 5)
+                par 4: opções: (1, 2, 3, 4, 5)
+                par 5: opções: (1, 2, 3, 4, 5)
+
+            presets:
+                inits: (0, 2, 2, 3)
+                orders: (1, 2, 3, 4, 5)
+
+
+
+
 
 
 # =============================== [ Treino ] =============================== #
@@ -104,7 +122,7 @@
 """
 
 import numpy as np
-import itertools
+from itertools import combinations, permutations, product
 import time
 
 # ----------------------------------------------------------------------------------------------------------- #
@@ -131,95 +149,78 @@ def myPrint_01(iterable, group_size=5):
 
 def generate_combinations(parameters):
     values = []
+    if isinstance(parameters, tuple):
+        return list(permutations(parameters))
+    
+    if isinstance(parameters, list) and len(parameters) > 1:
+        for param in parameters:
+            param_type = param['type']
+            range_values = param['range']
+            increment = param['increment']
 
-    for param in parameters:
-        param_type = param['type']
-        range_values = param['range']
-        increment = param['increment']
+            if param_type == int:
+                values.append(np.arange(range_values[0], range_values[1] + 1, increment).tolist())
+            elif param_type == float:
+                values.append(np.round(np.arange(range_values[0], range_values[1] + increment, increment), 2).tolist())
+        return list(product(*values))
 
-        if param_type == int:
-            values.append(np.arange(range_values[0], range_values[1] + 1, increment).tolist())
-        elif param_type == float:
-            values.append(np.round(np.arange(range_values[0], range_values[1] + increment, increment), 2).tolist())
+    return None
 
-    combinations = list(itertools.product(*values))
-
-    return combinations
 
 parCombination = {
-    'skill': {
-        'extend': {'type': int, 'range': (0, 1), 'increment': 1},
-        'countdown': {'type': int, 'range': (0, 5), 'increment': 1},
-        'rate': {'type': float, 'range': (0.0, 0.9), 'increment': 0.05},
-        'fill': {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}
-    },
-    'preset': {
-        1: {'type': int, 'range': (0, 1), 'increment': 1},
-        2: {'type': int, 'range': (0, 3), 'increment': 1},
-        3: {'type': int, 'range': (0, 3), 'increment': 1},
-        4: {'type': int, 'range': (0, 3), 'increment': 1},
-        5: {'type': int, 'range': (0, 3), 'increment': 1}
-    }
+    'skill': [
+        {'type': int, 'range': (0, 2), 'increment': 1},             # Extend
+        {'type': int, 'range': (0, 3), 'increment': 1},             # Turns
+        {'type': int, 'range': (0, 5), 'increment': 1},             # Countdown
+        {'type': float, 'range': (0.0, 0.9), 'increment': 0.05},    # Rate
+        {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Fill
+    ],
+    'preset_init': [
+        {'type': int, 'range': (0, 3), 'increment': 1},
+        {'type': int, 'range': (0, 3), 'increment': 1},
+        {'type': int, 'range': (0, 3), 'increment': 1},
+        {'type': int, 'range': (0, 3), 'increment': 1},
+        {'type': int, 'range': (0, 3), 'increment': 1}
+    ],
+    'preset_orders': (1, 2, 3, 4, 5)
 }
 
-def validPresets():
-    combinations = generate_combinations(parCombination['preset'].values())
-    isValid = set()
-    gabarito_01 = {
-        (0,),
-            (0, 0),
-                (0, 0, 0),
-                    (0, 0, 0, 0), (0, 0, 0, 1), (0, 0, 0, 2), (0, 0, 0, 3),
-                (0, 0, 1),
-                    (0, 0, 1, 0), (0, 0, 1, 2),
-                (0, 0, 2),
-                    (0, 0, 2, 0), (0, 0, 2, 1), (0, 0, 2, 2), (0, 0, 2, 3),
-                (0, 0, 3),
-                    (0, 0, 3, 0), (0, 0, 3, 2),
-            (0, 1),
-                (0, 1, 0),
-                    (0, 1, 0, 0), (0, 1, 0, 2),
-                (0, 1, 2),
-                    (0, 1, 2, 0), (0, 1, 2, 2),
-            (0, 2),
-                (0, 2, 0),
-                    (0, 2, 0, 0), (0, 2, 0, 1), (0, 2, 0, 2), (0, 2, 0, 3),
-                (0, 2, 1),
-                    (0, 2, 1, 0), (0, 2, 1, 2),
-                (0, 2, 2),
-                    (0, 2, 2, 0), (0, 2, 2, 1), (0, 2, 2, 2), (0, 2, 2, 3),
-                (0, 2, 3),
-                    (0, 2, 3, 0), (0, 2, 3, 2),
-            (0, 3),
-                (0, 3, 0),
-                    (0, 3, 0, 0), (0, 3, 0, 2),
-                (0, 3, 2),
-                    (0, 3, 2, 0), (0, 3, 2, 2),
-        (1,),
-            (1, 0),
-                (1, 0, 0),
-                    (1, 0, 0, 0), (1, 0, 0, 2),
-                (1, 0, 2),
-                    (1, 0, 2, 0), (1, 0, 2, 2),
-            (1, 2),
-                (1, 2, 0),
-                    (1, 2, 0, 0), (1, 2, 0, 2),
-                (1, 2, 2),
-                    (1, 2, 2, 0), (1, 2, 2, 2)
-    }
-    lengths = [1, 2, 3, 4, 5]
-    print(len(gabarito_01))
-    for l in lengths:
-        for comb in combinations:
-            c = comb[:l]
-            if c.count(1) > 1 or c.count(3) > 1:
-                continue
-            if 1 in c and 3 in c:
-                continue
-            isValid.add(tuple(c))  # Adicionar como tupla para garantir unicidade
-        sorted_list = sorted(list(isValid))
-    return sorted_list
+def generate_presets():
+    presets = []
+    inits = []
+    orders = []
 
-preSetsComb = validPresets()
+    initsCombinations = generate_combinations(parCombination['preset_init'])
+    ordersCombinations = generate_combinations(parCombination['preset_orders'])
 
-myPrint_01(preSetsComb, 7)
+    length = len(initsCombinations[0])
+
+    for c in ordersCombinations:
+        if c[0] != 1:
+            continue
+        orders.append(c)
+
+    for c in initsCombinations:
+        if c[0] in [2, 3]:
+            continue
+        if 1 in c and 3 in c:
+            continue
+        if c.count(1) > 1 or c.count(3) > 1:
+            continue
+        if c.count(2) + c.count(3) == length:
+            continue
+        inits.append(c)  # Adicionar como tupla para garantir unicidade
+
+    for i in inits:
+        preset = []
+        for idx, par in enumerate(i):
+            if par == 2:
+                preset.append(0) # Block
+        presets.append(preset)
+
+    return inits
+
+valid_presets = generate_presets()
+valid_skills = generate_combinations(parCombination['skill'])
+print(len(valid_presets))
+myPrint_01(valid_presets, 5)
