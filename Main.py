@@ -146,6 +146,24 @@ def myPrint_01(iterable, group_size=5):
         print(group)
 
 # ----------------------------------------------------------------------------------------------------------- #
+parameters_to_combinations = {
+    'skill': [
+        {'type': int, 'range': (0, 1), 'increment': 1},             # Extra Turn
+        {'type': int, 'range': (0, 2), 'increment': 1},             # Extend
+        {'type': int, 'range': (0, 3), 'increment': 1},             # Turns
+        {'type': int, 'range': (0, 7), 'increment': 1},             # Countdown
+        {'type': float, 'range': (0.0, 0.9), 'increment': 0.05},    # Rate
+        {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Fill
+    ],
+    'preset_init': [
+        {'type': int, 'range': (0, 3), 'increment': 1},
+        {'type': int, 'range': (0, 3), 'increment': 1},
+        {'type': int, 'range': (0, 3), 'increment': 1},
+        {'type': int, 'range': (0, 3), 'increment': 1},
+        {'type': int, 'range': (0, 3), 'increment': 1}
+    ],
+    'preset_orders': (1, 2, 3, 4, 5)
+}
 
 def generate_combinations(parameters):
     values = []
@@ -166,61 +184,70 @@ def generate_combinations(parameters):
 
     return None
 
+def initial_part_filter(combinations):
+    """
+    Filtra combinações com base nas regras fornecidas.
+    """
+    filtered = []
+    length = len(combinations[0])
+    for combination in combinations:
+        if combination[0] in [2, 3]:
+            continue
+        if 1 in combination and 3 in combination:
+            continue
+        if combination.count(1) > 1 or combination.count(3) > 1:
+            continue
+        if combination.count(2) + combination.count(3) == length:
+            continue
+        filtered.append(combination)
+    return filtered
 
-parCombination = {
-    'skill': [
-        {'type': int, 'range': (0, 2), 'increment': 1},             # Extend
-        {'type': int, 'range': (0, 3), 'increment': 1},             # Turns
-        {'type': int, 'range': (0, 5), 'increment': 1},             # Countdown
-        {'type': float, 'range': (0.0, 0.9), 'increment': 0.05},    # Rate
-        {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Fill
-    ],
-    'preset_init': [
-        {'type': int, 'range': (0, 3), 'increment': 1},
-        {'type': int, 'range': (0, 3), 'increment': 1},
-        {'type': int, 'range': (0, 3), 'increment': 1},
-        {'type': int, 'range': (0, 3), 'increment': 1},
-        {'type': int, 'range': (0, 3), 'increment': 1}
-    ],
-    'preset_orders': (1, 2, 3, 4, 5)
-}
+def process_preset(condition_list, value_list):
+    """
+    Processa as listas fornecidas e retorna uma lista contendo:
+    - o último índice de `condition_list` onde o valor é 1 ou 3,
+    - seguido pelos índices dos valores positivos no resultado da soma vetorial de `value_list` e `adjustments`.
+    """
+    # Inicialização de variáveis
+    adjustments = []
+    last_valid_index = None
 
-def generate_presets():
+    # Preenchimento de `adjustments` e determinação de `last_valid_index` em uma única iteração
+    for index, value in enumerate(condition_list):
+        if value == 1 or value == 3:
+            last_valid_index = index
+        if value in (2, 3):
+            adjustments.append(-6)
+        else:
+            adjustments.append(0)
+
+    # Soma de vetores usando numpy arrays
+    result_list = np.array(value_list) + np.array(adjustments)
+
+    # Ordenar índices com base nos valores de result_list
+    sorted_indices = [i for i, value in sorted(enumerate(result_list), key=lambda x: x[1], reverse=True) if value > 0]
+
+    # Criar a lista final `final_result`
+    return [last_valid_index] + sorted_indices
+
+def generate_presets(parameters):
+    """
+    Gera os presets combinando e processando dados de `parameters`.
+    """
+    inits_combinations = generate_combinations(parameters['preset_init'])
+    orders_combinations = generate_combinations(parameters['preset_orders'])
+
+    filtered_inits = initial_part_filter(inits_combinations)
+    filtered_orders = [c for c in orders_combinations if c[0] == 1]
+
     presets = []
-    inits = []
-    orders = []
+    for order in filtered_orders:
+        for init in filtered_inits:
+            presets.append(process_preset(init, order))
+    
+    return presets
 
-    initsCombinations = generate_combinations(parCombination['preset_init'])
-    ordersCombinations = generate_combinations(parCombination['preset_orders'])
-
-    length = len(initsCombinations[0])
-
-    for c in ordersCombinations:
-        if c[0] != 1:
-            continue
-        orders.append(c)
-
-    for c in initsCombinations:
-        if c[0] in [2, 3]:
-            continue
-        if 1 in c and 3 in c:
-            continue
-        if c.count(1) > 1 or c.count(3) > 1:
-            continue
-        if c.count(2) + c.count(3) == length:
-            continue
-        inits.append(c)  # Adicionar como tupla para garantir unicidade
-
-    for i in inits:
-        preset = []
-        for idx, par in enumerate(i):
-            if par == 2:
-                preset.append(0) # Block
-        presets.append(preset)
-
-    return inits
-
-valid_presets = generate_presets()
-valid_skills = generate_combinations(parCombination['skill'])
+valid_presets = generate_presets(parameters_to_combinations)
+valid_skills = generate_combinations(parameters_to_combinations['skill'])
 print(len(valid_presets))
 myPrint_01(valid_presets, 5)
