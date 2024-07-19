@@ -42,21 +42,22 @@
 # ============================== [ Entradas ] ============================== #
     [ ] Herois
         [ ] Base Speed (80-150)
-        [ ] Skills (3) -> 4788
-            [ ] Extended
+        [ ] Skills -> 76.608
+            [ ] Extra Turn
+            [ ] Extended (0-2)
             [ ] Rate (0-90)(%5)
             [ ] Turn Meter Fill (5-100)(5%) 
-            [ ] Countdown (1-5)
-        [ ] Preset: inits + orders
-            [ ] None
-            [ ] Opener
-            [ ] Off
-            [ ] OpenerOff
-            [ ] First
-            [ ] Second
-            [ ] Third
-            [ ] Forth
-            [ ] Fifth
+            [ ] Countdown (0-7)
+        [x] Preset: inits + orders -> 2.304
+            [x] None
+            [x] Opener
+            [x] Off
+            [x] OpenerOff
+            [x] First
+            [x] Second
+            [x] Third
+            [x] Forth
+            [x] Fifth
 
             inits:
                 parâmetros = [1, 2, 3, 4, 5]
@@ -92,15 +93,6 @@
                 par 3: opções: (1, 2, 3, 4, 5)
                 par 4: opções: (1, 2, 3, 4, 5)
                 par 5: opções: (1, 2, 3, 4, 5)
-
-            presets:
-                inits: (0, 2, 2, 3)
-                orders: (1, 2, 3, 4, 5)
-
-
-
-
-
 
 # =============================== [ Treino ] =============================== #
 [] Criar Classe Hero(base_speed, preset)
@@ -148,12 +140,12 @@ def myPrint_01(iterable, group_size=5):
 # ----------------------------------------------------------------------------------------------------------- #
 parameters_to_combinations = {
     'skill': [
+        {'type': int, 'range': (0, 5), 'increment': 1},             # Countdown
         {'type': int, 'range': (0, 1), 'increment': 1},             # Extra Turn
-        {'type': int, 'range': (0, 2), 'increment': 1},             # Extend
-        {'type': int, 'range': (0, 3), 'increment': 1},             # Turns
-        {'type': int, 'range': (0, 7), 'increment': 1},             # Countdown
-        {'type': float, 'range': (0.0, 0.9), 'increment': 0.05},    # Rate
-        {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Fill
+        {'type': int, 'range': (0, 1), 'increment': 1},             # Buff Extend
+        {'type': int, 'range': (0, 3), 'increment': 1},             # Buff Turns
+        {'type': float, 'range': (0.0, 0.3), 'increment': 0.15},    # Speed Rate
+        {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Turn Meter Fill
     ],
     'preset_init': [
         {'type': int, 'range': (0, 3), 'increment': 1},
@@ -165,6 +157,7 @@ parameters_to_combinations = {
     'preset_orders': (1, 2, 3, 4, 5)
 }
 
+# ============================================= [ Presets ] ============================================= #
 def generate_combinations(parameters):
     values = []
     if isinstance(parameters, tuple):
@@ -246,8 +239,14 @@ def generate_presets(parameters):
             presets.append(process_preset(init, order))
     
     return presets
+# ------------------------------------------------------------------------------------------------------- #
 
 valid_presets = generate_presets(parameters_to_combinations)
-valid_skills = generate_combinations(parameters_to_combinations['skill'])
-print(len(valid_presets))
-myPrint_01(valid_presets, 5)
+valid_skills = [
+    s for s in generate_combinations(parameters_to_combinations['skill']) 
+    if not(s[3] != 0  and s[4] == 0.0 or s[3] == 0 and s[4] != 0.0)
+]
+a1s = [a for a in valid_skills if a[0] == 0 and a[1] == 0 and a[2] == 0]
+a2s_a5s = [a for a in valid_skills if a[0] != 0]
+
+time.sleep(1)
