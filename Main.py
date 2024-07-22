@@ -18,12 +18,13 @@
         * Um turno termina quando o Boss ataca.
     [x] Criar função que retorne Skill genérica.
         [x] Criar DabaBase com todas combinações utilizadas nas Skills genéricas.
-        [x] Alterar estratégia
+        [x] Alterar estratégia.
         [x] Criar função que retorne valores aleatórios para skills a1 e a2+.
     [x] Criar função que retorne Preset genérico.
         [x] Criar DataBase com todas combinações utilizadas nos Presets.
-        [x] Alterar estratégia
+        [x] Alterar estratégia.
         [x] Criar função que retorne valores aleatórios para Presets.
+    [ ] Criar função que retorne 1 Preset, 1 Skill A1 e 4 Skill A2 aleatório e sem retição.
 3. [ ] Criar uma função capaz de definir se uma partida cumpre ou não a ocurrence definida.
 
 # ============================= [ Informações ] ============================= #
