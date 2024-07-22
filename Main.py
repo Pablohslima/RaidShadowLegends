@@ -370,5 +370,6 @@ skills = {
     'a2': rvcg(pfc['a2'], isValidSkill),
     'a3': rvcg(pfc['a2'], isValidSkill),
     'a4': rvcg(pfc['a2'], isValidSkill),
-    'a5': rvcg(pfc['a2'], isValidSkill),
+    'a5': rvcg(pfc['a2'], isValidSkill)
 }
+time.sleep(1)
