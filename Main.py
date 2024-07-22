@@ -16,13 +16,14 @@
 2. [ ] Criar DataBase com informações turno a turno de uma partida.
     ** Detalhes:
         * Um turno termina quando o Boss ataca.
-    [ ] Criar Skill genérica.
+    [x] Criar função que retorne Skill genérica.
         [x] Criar DabaBase com todas combinações utilizadas nas Skills genéricas.
         [x] Alterar estratégia
         [x] Criar função que retorne valores aleatórios para skills a1 e a2+.
-    [ ] Criar Preset.
-        [ ] Criar DataBase com todas combinações utilizadas nos Presets.
-
+    [x] Criar função que retorne Preset genérico.
+        [x] Criar DataBase com todas combinações utilizadas nos Presets.
+        [x] Alterar estratégia
+        [x] Criar função que retorne valores aleatórios para Presets.
 3. [ ] Criar uma função capaz de definir se uma partida cumpre ou não a ocurrence definida.
 
 # ============================= [ Informações ] ============================= #
