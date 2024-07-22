@@ -18,21 +18,13 @@
         * Um turno termina quando o Boss ataca.
     [ ] Criar Skill genérica.
         [x] Criar DabaBase com todas combinações utilizadas nas Skills genéricas.
+        [x] Alterar estratégia
+        [x] Criar função que retorne valores aleatórios para skills a1 e a2+.
     [ ] Criar Preset.
         [ ] Criar DataBase com todas combinações utilizadas nos Presets.
 
 3. [ ] Criar uma função capaz de definir se uma partida cumpre ou não a ocurrence definida.
 
-
-* criar recurso que aplique esses recursos na rede neural
-* em cada turno da rede neural ela pode executar tais acoes:
-1. ver o resultado dos proximo turno(-0.5)
-2. Reiniciar a corrida porem alterando os valores que inseriu. Futurmente alterando tambem os presets.(-1.0)
-* -1.0 e -0.5 sao subtraidos da pontuacao dela.
-* cada simulacao inicia com 10 pontos.
-* em cada turno, satisfazendo a "meta" ela recebe +1.0
-* em cada grupo de teste, aqueles com mais pontos serao replicados, os outros excluidos.
-* talvez sejs necesserio outra ia pra dar suporte a isso.
 # ============================= [ Informações ] ============================= #
 # Turn Meter Max: 100
 # Turn Meter Fill Rate: 0.07
@@ -42,11 +34,11 @@
 # ============================== [ Entradas ] ============================== #
     [ ] Herois
         [ ] Base Speed (80-150)
-        [ ] Skills -> 76.608
+        [ ] Skills -> Qtd enorme
             [ ] Extra Turn
             [ ] Extended (0-2)
             [ ] Rate (0-90)(%5)
-            [ ] Turn Meter Fill (5-100)(5%) 
+            [ ] Turn Meter Fill (5-100)(5%)
             [ ] Countdown (0-7)
         [x] Preset: inits + orders -> 2.304
             [x] None
@@ -115,6 +107,7 @@
 
 import numpy as np
 from itertools import combinations, permutations, product
+import random
 import time
 
 # ----------------------------------------------------------------------------------------------------------- #
@@ -147,6 +140,22 @@ parameters_to_combinations = {
         {'type': float, 'range': (0.0, 0.3), 'increment': 0.15},    # Speed Rate
         {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Turn Meter Fill
     ],
+    'a1': [
+        {'type': int, 'range': (0, 0), 'increment': 1},             # Countdown
+        {'type': int, 'range': (0, 0), 'increment': 1},             # Extra Turn
+        {'type': int, 'range': (0, 0), 'increment': 1},             # Buff Extend
+        {'type': int, 'range': (0, 0), 'increment': 1},             # Buff Turns
+        {'type': float, 'range': (0.0, 0.0), 'increment': 0.15},    # Speed Rate
+        {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Turn Meter Fill
+    ],
+    'a2': [
+        {'type': int, 'range': (1, 5), 'increment': 1},             # Countdown
+        {'type': int, 'range': (0, 1), 'increment': 1},             # Extra Turn
+        {'type': int, 'range': (0, 1), 'increment': 1},             # Buff Extend
+        {'type': int, 'range': (0, 3), 'increment': 1},             # Buff Turns
+        {'type': float, 'range': (0.0, 0.3), 'increment': 0.15},    # Speed Rate
+        {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Turn Meter Fill
+    ],
     'preset_init': [
         {'type': int, 'range': (0, 3), 'increment': 1},
         {'type': int, 'range': (0, 3), 'increment': 1},
@@ -158,6 +167,52 @@ parameters_to_combinations = {
 }
 
 # ============================================= [ Presets ] ============================================= #
+def grc_skill(parameters): # GENERATE RANDON COMBINATION SKILL
+    result = []
+    if isinstance(parameters, tuple):
+        return tuple(random.sample(parameters, len(parameters)))
+
+    if isinstance(parameters, list) and len(parameters) > 1:
+        for param in parameters:
+            param_type = param['type']
+            range_values = param['range']
+            increment = param['increment']
+
+            # Calcula o número de valores possíveis
+            num_values = int((range_values[1] - range_values[0]) / increment) + 1
+
+            # Seleciona um índice aleatório
+            random_index = random.randint(0, num_values - 1)
+
+            # Calcula o valor correspondente ao índice
+            random_value = range_values[0] + random_index * increment
+
+            # Se o tipo do parâmetro for float, arredonda para duas casas decimais
+            if param_type == float:
+                random_value = round(random_value, 2)
+
+            result.append(random_value)
+
+        return result
+
+    return None
+
+def isValidSkill(parameters):
+    return parameters[3] == 0 and parameters[4] == 0.0 or parameters[3] != 0 and parameters[4] != 0.0
+
+def test(a):
+    skl = grc_skill(parameters_to_combinations[a])
+    ivs = isValidSkill(skl)
+    while not ivs:
+        print(skl, ivs)
+        skl = grc_skill(parameters_to_combinations[a])
+        ivs = isValidSkill(skl)
+    print(skl, ivs)
+
+test('a2')
+
+time.sleep(1)
+
 def generate_combinations(parameters):
     values = []
     if isinstance(parameters, tuple):
@@ -244,7 +299,7 @@ def generate_presets(parameters):
 valid_presets = generate_presets(parameters_to_combinations)
 valid_skills = [
     s for s in generate_combinations(parameters_to_combinations['skill']) 
-    if not(s[3] != 0  and s[4] == 0.0 or s[3] == 0 and s[4] != 0.0)
+    if not(s[3] != 0 and s[4] == 0.0 or s[3] == 0 and s[4] != 0.0)
 ]
 a1s = [a for a in valid_skills if a[0] == 0 and a[1] == 0 and a[2] == 0]
 a2s_a5s = [a for a in valid_skills if a[0] != 0]
