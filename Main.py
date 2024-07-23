@@ -70,7 +70,7 @@ import time
 import json
 # ----------------------------------------------------------------------------------------------------------- #
 
-def pplist(iterable, group_size=5):
+def prtit(iterable, group_size=5): # PRINT A iterable IN GROUPS OF group_size
     """
     Imprime elementos do iterável em grupos de tamanho especificado.
 
