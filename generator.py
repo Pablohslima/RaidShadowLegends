@@ -228,7 +228,7 @@ def gen_test(validations=1000):
         v+=1
         if z == 1:
             while True:
-                user_input = input('Precione Enter para continuar')  # Aguarda o pressionamento de Enter
+                user_input = input('Pressione Enter para continuar')  # Aguarda o pressionamento de Enter
                 clear_console()
                 z=0
                 # Verifica se o usuário pressionou Enter (entrada vazia)
