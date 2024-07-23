@@ -109,9 +109,10 @@
 
 import numpy as np
 from itertools import combinations, permutations, product
+import subprocess
 import random
 import time
-
+import json
 # ----------------------------------------------------------------------------------------------------------- #
 
 def myPrint_01(iterable, group_size=5):
@@ -131,7 +132,24 @@ def myPrint_01(iterable, group_size=5):
         group = iterable_list[i:i + group_size]
         # Imprime o grupo
         print(group)
+def myPrint_02(d):
+    # Função auxiliar para converter o dicionário para o formato desejado
+    def dict_to_json_str(d, indent=4):
+        json_str = "{\n"
+        for i, (key, value) in enumerate(d.items()):
+            json_str += f'{" " * indent}{repr(key)}: [\n'
+            for item in value:
+                json_str += f'{" " * (indent * 2)}{item},\n'
+            json_str = json_str.rstrip(',\n') + "\n"
+            json_str += f'{" " * indent}],\n'
+        json_str = json_str.rstrip(',\n') + "\n"
+        json_str += "}"
+        return json_str
 
+    print(dict_to_json_str(d))
+
+def clear_console():
+    subprocess.run(['cls'], shell=True)  # Use 'cls' se estiver no Windows
 # ----------------------------------------------------------------------------------------------------------- #
 pfc = { # PARAMETERS FOR COMBINATION
     'skill': [
@@ -142,22 +160,24 @@ pfc = { # PARAMETERS FOR COMBINATION
         {'type': float, 'range': (0.0, 0.3), 'increment': 0.15},    # Speed Rate
         {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Turn Meter Fill
     ],
-    'a1': [
-        {'type': int, 'range': (0, 0), 'increment': 1},             # Countdown
-        {'type': int, 'range': (0, 0), 'increment': 1},             # Extra Turn
-        {'type': int, 'range': (0, 0), 'increment': 1},             # Buff Extend
-        {'type': int, 'range': (0, 0), 'increment': 1},             # Buff Turns
-        {'type': float, 'range': (0.0, 0.0), 'increment': 0.15},    # Speed Rate
-        {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Turn Meter Fill
-    ],
-    'a2': [
-        {'type': int, 'range': (1, 5), 'increment': 1},             # Countdown
-        {'type': int, 'range': (0, 1), 'increment': 1},             # Extra Turn
-        {'type': int, 'range': (0, 1), 'increment': 1},             # Buff Extend
-        {'type': int, 'range': (0, 3), 'increment': 1},             # Buff Turns
-        {'type': float, 'range': (0.0, 0.3), 'increment': 0.15},    # Speed Rate
-        {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Turn Meter Fill
-    ],
+    'skill': {
+        'a1': [
+            {'type': int, 'range': (0, 0), 'increment': 1},             # Countdown
+            {'type': int, 'range': (0, 0), 'increment': 1},             # Extra Turn
+            {'type': int, 'range': (0, 0), 'increment': 1},             # Buff Extend
+            {'type': int, 'range': (0, 0), 'increment': 1},             # Buff Turns
+            {'type': float, 'range': (0.0, 0.0), 'increment': 0.15},    # Speed Rate
+            {'type': float, 'range': (0.0, 0.1), 'increment': 0.05}     # Turn Meter Fill
+        ],
+        'a2': [
+            {'type': int, 'range': (1, 5), 'increment': 1},             # Countdown
+            {'type': int, 'range': (0, 1), 'increment': 1},             # Extra Turn
+            {'type': int, 'range': (0, 1), 'increment': 1},             # Buff Extend
+            {'type': int, 'range': (0, 3), 'increment': 1},             # Buff Turns
+            {'type': float, 'range': (0.0, 0.3), 'increment': 0.15},    # Speed Rate
+            {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Turn Meter Fill
+        ]
+    },
     'preset': {
         'ps1': [
             {'type': int, 'range': (0, 1), 'increment': 1},
@@ -173,7 +193,7 @@ pfc = { # PARAMETERS FOR COMBINATION
 # ============================================= [ Presets Random ] ============================================= #
 def rcg(parameters): # RANDON COMBINATION GENERATOR
     result = []
-    if isinstance(parameters, tuple):
+    if isinstance(parameters, tuple): 
         return tuple(random.sample(parameters, len(parameters)))
 
     if isinstance(parameters, list) and len(parameters) > 1:
@@ -201,45 +221,42 @@ def rcg(parameters): # RANDON COMBINATION GENERATOR
 
     return None
 
-def isValidSkill(par): # SKILL VALIDATOR
-    return par[3] == 0 and par[4] == 0.0 or par[3] != 0 and par[4] != 0.0
+def rvcg(parameters):  # PRESET AND SKILL GENERATOR
+    def isValidSkill(par):  # SKILL VALIDATOR
+        return (par[3] == 0 and par[4] == 0.0) or (par[3] != 0 and par[4] != 0.0)
 
-def isValidPreset(par1, par2): # PRESET VALIDATOR
-    return not (
-            1 in par1 and 3 in par1 or
-            par1.count(1) > 1 or
-            par1.count(3) > 1 or
-            par1.count(2) + par1.count(3) == len(par1)
-        ) and par2[0] == 1
+    def isValidPreset(par1, par2):  # PRESET VALIDATOR
+        return not (
+                (1 in par1 and 3 in par1) or
+                (par1.count(1) > 1) or
+                (par1.count(3) > 1) or
+                (par1.count(2) + par1.count(3) == len(par1))
+            ) and (par2[0] == 1)
+    
+    # Criando 5 skills, sendo 1 a1 e 4 a2
+    guide = ['a1', 'a2', 'a2', 'a2', 'a2']
+    skills = set()
+    
+    for g in guide:
+        skill = rcg(parameters['skill'][g])  # Gerando uma skill aleatória
+        while not isValidSkill(skill) or skill in skills:
+            skill = rcg(parameters['skill'][g])
+        skills.add(skill)
 
-def rvcg(par, isValid): # RANDON VALID COMBINATION GENERATOR
-    if callable(isValid):
-        if isValid.__name__ == 'isValidSkill':
-            result = rcg(par)
-            if isValid(result):
-                return result
+    skills = list(skills)
+    
+    # Criando as duas partes do preset
+    preset1 = rcg(parameters['preset']['ps1'])
+    preset2 = rcg(parameters['preset']['ps2'])
+    
+    while not isValidPreset(preset1, preset2):
+        preset1 = rcg(parameters['preset']['ps1'])
+        preset2 = rcg(parameters['preset']['ps2'])
 
-        if isValid.__name__ == 'isValidPreset':
-            result = [
-                rcg(par['ps1']),
-                rcg(par['ps2'])
-            ]
-            if isValid(result[0], result[1]):
-                result.append(process_preset(*result))
-                return result
-
-        return rvcg(par, isValid)
-    else:
-        print('Insira uma função no parâmetro "isValid"')
-    return None
-
-def rvcg_skl_ps(): # RANDON VALID COMBINATION GENERATOR: SKILLS AND PRESET
-    # Deve gerar:
-    #   [ ] 1 Skill A1
-    #   [ ] 4 Skill A2
-    #   [ ] 1 Preset
-    #   * Não pode gerar skills iguais.
-    pass
+    preset = [preset1, preset2, process_preset(preset1, preset2)]
+    skills.sort()
+    
+    return {'preset': preset, 'skills': skills}
 
 # ============================================= [ Presets DataBase ] ============================================= #
 def generate_combinations(parameters):
@@ -309,7 +326,7 @@ def generate_presets(parameters):
     """
     Gera os presets combinando e processando dados de `parameters`.
     """
-    inits_combinations = generate_combinations(parameters['preset']['ps1'])
+    inits_combinations = generate_combinations(parameters['preset']['preset']['ps1'])
     orders_combinations = generate_combinations(parameters['preset']['ps2'])
     filtered_inits = initial_part_filter(inits_combinations)
     filtered_orders = [c for c in orders_combinations if c[0] == 1]
@@ -321,55 +338,28 @@ def generate_presets(parameters):
     
     return presets
 # ============================================= [ Testes ] ============================================= #
-
-def testPreset(validations):
-    valid_presets = generate_presets(pfc)
-    v = 0
-    while v < validations:
-        ps = rvcg(pfc['preset'], isValidPreset)
-        if ps[2] not in valid_presets:
-            print("Preset Inválido:", ps)
+clear_console()
+def testSkills(validations):
+    skills_values = rvcg(pfc)
+    v = 1
+    z = 0
+    while v <= validations:
+        print(f"Combinação aleatória nº {v}:")
+        myPrint_02(skills_values)
+        skills_values = rvcg(pfc)
         v+=1
-        if v == validations:
-            print("Todos Presets gerados são válidos!")
+        if z == 1:
+            while True:
+                user_input = input('Precione Enter para continuar')  # Aguarda o pressionamento de Enter
+                clear_console()
+                z=0
+                # Verifica se o usuário pressionou Enter (entrada vazia)
+                if user_input == "":
+                    break
+                # Aqui você pode adicionar a lógica que deseja executar dentro do loop
+        else:
+            z+=1
 
-def testSkill(validations):
-    valid_skills = [
-        s for s in generate_combinations(pfc['skill']) 
-        if not(s[3] != 0 and s[4] == 0.0 or s[3] == 0 and s[4] != 0.0)
-    ]
-    a1s = [a for a in valid_skills if a[0] == 0 and a[1] == 0 and a[2] == 0]
-    a2s = [a for a in valid_skills if a[0] != 0]
 
-    v = 0
-    v1 = True
-    v2 = True
-    while v < validations:
-        skill_a1 = rvcg(pfc['a1'], isValidSkill)
-        skill_a2 = rvcg(pfc['a2'], isValidSkill)
-
-        if skill_a1 not in a1s:
-            v1 = False
-            print("Skill A1 Inválida:", skill_a1)
-
-        if skill_a2 not in a2s:
-            v2 = False
-            print("Skill A2 Inválida:", skill_a2)
-
-        v+=1
-
-        if v == validations:
-            if v1:
-                print("Todas Skills A1 geradas são válidas!")
-            if v2:
-                print("Todas Skills A2 geradas são válidas!")
-
-preset = rvcg(pfc['preset'], isValidPreset)
-skills = {
-    'a1': rvcg(pfc['a1'], isValidSkill),
-    'a2': rvcg(pfc['a2'], isValidSkill),
-    'a3': rvcg(pfc['a2'], isValidSkill),
-    'a4': rvcg(pfc['a2'], isValidSkill),
-    'a5': rvcg(pfc['a2'], isValidSkill)
-}
+testSkills(100)
 time.sleep(1)
