@@ -13,6 +13,7 @@
 
 # ============================ [ Planejamento ] ============================= #
 1. [ ] Criar uma simulação do jogo.
+
 2. [ ] Criar DataBase com informações turno a turno de uma partida.
     ** Detalhes:
         * Um turno termina quando o Boss ataca.
@@ -24,7 +25,8 @@
         [x] Criar DataBase com todas combinações utilizadas nos Presets.
         [x] Alterar estratégia.
         [x] Criar função que retorne valores aleatórios para Presets.
-    [ ] Criar função que retorne 1 Preset, 1 Skill A1 e 4 Skill A2 aleatório e sem retição.
+    [x] Criar função que retorne 1 Preset, 1 Skill A1 e 4 Skills A2 aleatórias e sem repetição.
+
 3. [ ] Criar uma função capaz de definir se uma partida cumpre ou não a ocurrence definida.
 
 # ============================= [ Informações ] ============================= #
@@ -36,76 +38,29 @@
 # ============================== [ Entradas ] ============================== #
     [ ] Herois
         [ ] Base Speed (80-150)
-        [ ] Skills -> Qtd enorme
-            [ ] Extra Turn
-            [ ] Extended (0-2)
-            [ ] Rate (0-90)(%5)
-            [ ] Turn Meter Fill (5-100)(5%)
-            [ ] Countdown (0-7)
-        [x] Preset: inits + orders -> 2.304
+
+        [x] Skills
+            [x] Countdown           ->  [0]         [1-7]
+            [x] Extra Turn          ->  [0]         [0-1]
+            [x] Buff Extend         ->  [0]         [0-1]
+            [x] Buff Turns          ->  [0]         [0-3]
+            [x] Speed Rate          ->  [0]         [0-0.3]
+            [x] Turn Meter Fill     ->  [0-0.1]     [0-1.0]
+
+        [x] Preset: Restrictions + Priorities -> 2.304
             [x] None
             [x] Opener
-            [x] Off
-            [x] OpenerOff
-            [x] First
-            [x] Second
-            [x] Third
-            [x] Forth
-            [x] Fifth
-
-            inits:
-                parâmetros = [1, 2, 3, 4, 5]
-                lp = 4
-                opções = {
-                    0: Free
-                    1: Opener
-                    2: Off
-                    3: OpenerOff
-                }
-
-                * Cada parâmetro pode ter apenas 1 opção.
-                * Todos parâmetros podem ter a opção 0.
-                * Pode existir apenas 1 parâmetro com a opção 1.
-                * Pode existir apenas 1 parâmetro com a opção 3.
-                * Os parâmetros 1 e 3 não podem coexistir.
-                    
-                par 1: opções: (0, 1, 2, 3)
-                par 2: opções: (0, 1, 2, 3)
-                par 3: opções: (0, 1, 2, 3)
-                par 4: opções: (0, 1, 2, 3)
-                par 5: opções: (0, 1, 2, 3)
-
-            orders:
-                parâmetros = [1, 2, 3, 4, 5]
-                opções = [1, 2, 3, 4, 5]
-
-                * Cada parâmetro pode ter apenas 1 opção.
-                * Todas opções devem ser diferentes.
-
-                par 1: opções: (1, 2, 3, 4, 5)
-                par 2: opções: (1, 2, 3, 4, 5)
-                par 3: opções: (1, 2, 3, 4, 5)
-                par 4: opções: (1, 2, 3, 4, 5)
-                par 5: opções: (1, 2, 3, 4, 5)
-
-# =============================== [ Treino ] =============================== #
-[] Criar Classe Hero(base_speed, preset)
-    -> nome
-    -> turn_meter
-    -> presets
-
-[] Criar Classe Speed
-    -> base
-    -> true
-    -> buff
-    -> debuff
-    -> tick_rate
-[] Criar Classe Skill
-[] Criar Classe PreSet
-[] Criar Classe Time
-
+            [x] Block
+            [x] OpenerBlock
+            [x] First Priority
+            [x] Second Priority
+            [x] Third Priority
+            [x] Forth Priority
+            [x] Fifth Priority
 =====================================================================================================================================
 """
+
+from generator import rvcg as gen, gen_test
 
 import numpy as np
 from itertools import combinations, permutations, product
@@ -115,7 +70,7 @@ import time
 import json
 # ----------------------------------------------------------------------------------------------------------- #
 
-def myPrint_01(iterable, group_size=5):
+def pplist(iterable, group_size=5):
     """
     Imprime elementos do iterável em grupos de tamanho especificado.
 
@@ -132,234 +87,5 @@ def myPrint_01(iterable, group_size=5):
         group = iterable_list[i:i + group_size]
         # Imprime o grupo
         print(group)
-def myPrint_02(d):
-    # Função auxiliar para converter o dicionário para o formato desejado
-    def dict_to_json_str(d, indent=4):
-        json_str = "{\n"
-        for i, (key, value) in enumerate(d.items()):
-            json_str += f'{" " * indent}{repr(key)}: [\n'
-            for item in value:
-                json_str += f'{" " * (indent * 2)}{item},\n'
-            json_str = json_str.rstrip(',\n') + "\n"
-            json_str += f'{" " * indent}],\n'
-        json_str = json_str.rstrip(',\n') + "\n"
-        json_str += "}"
-        return json_str
 
-    print(dict_to_json_str(d))
-
-def clear_console():
-    subprocess.run(['cls'], shell=True)  # Use 'cls' se estiver no Windows
-# ----------------------------------------------------------------------------------------------------------- #
-pfc = { # PARAMETERS FOR COMBINATION
-    'skill': [
-        {'type': int, 'range': (0, 5), 'increment': 1},             # Countdown
-        {'type': int, 'range': (0, 1), 'increment': 1},             # Extra Turn
-        {'type': int, 'range': (0, 1), 'increment': 1},             # Buff Extend
-        {'type': int, 'range': (0, 3), 'increment': 1},             # Buff Turns
-        {'type': float, 'range': (0.0, 0.3), 'increment': 0.15},    # Speed Rate
-        {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Turn Meter Fill
-    ],
-    'skill': {
-        'a1': [
-            {'type': int, 'range': (0, 0), 'increment': 1},             # Countdown
-            {'type': int, 'range': (0, 0), 'increment': 1},             # Extra Turn
-            {'type': int, 'range': (0, 0), 'increment': 1},             # Buff Extend
-            {'type': int, 'range': (0, 0), 'increment': 1},             # Buff Turns
-            {'type': float, 'range': (0.0, 0.0), 'increment': 0.15},    # Speed Rate
-            {'type': float, 'range': (0.0, 0.1), 'increment': 0.05}     # Turn Meter Fill
-        ],
-        'a2': [
-            {'type': int, 'range': (1, 5), 'increment': 1},             # Countdown
-            {'type': int, 'range': (0, 1), 'increment': 1},             # Extra Turn
-            {'type': int, 'range': (0, 1), 'increment': 1},             # Buff Extend
-            {'type': int, 'range': (0, 3), 'increment': 1},             # Buff Turns
-            {'type': float, 'range': (0.0, 0.3), 'increment': 0.15},    # Speed Rate
-            {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Turn Meter Fill
-        ]
-    },
-    'preset': {
-        'ps1': [
-            {'type': int, 'range': (0, 1), 'increment': 1},
-            {'type': int, 'range': (0, 3), 'increment': 1},
-            {'type': int, 'range': (0, 3), 'increment': 1},
-            {'type': int, 'range': (0, 3), 'increment': 1},
-            {'type': int, 'range': (0, 3), 'increment': 1}
-        ],
-        'ps2': (1, 2, 3, 4, 5)
-    }
-}
-
-# ============================================= [ Presets Random ] ============================================= #
-def rcg(parameters): # RANDON COMBINATION GENERATOR
-    result = []
-    if isinstance(parameters, tuple): 
-        return tuple(random.sample(parameters, len(parameters)))
-
-    if isinstance(parameters, list) and len(parameters) > 1:
-        for param in parameters:
-            param_type = param['type']
-            range_values = param['range']
-            increment = param['increment']
-
-            # Calcula o número de valores possíveis
-            num_values = int((range_values[1] - range_values[0]) / increment) + 1
-
-            # Seleciona um índice aleatório
-            random_index = random.randint(0, num_values - 1)
-
-            # Calcula o valor correspondente ao índice
-            random_value = range_values[0] + random_index * increment
-
-            # Se o tipo do parâmetro for float, arredonda para duas casas decimais
-            if param_type == float:
-                random_value = round(random_value, 2)
-
-            result.append(random_value)
-
-        return tuple(result)
-
-    return None
-
-def rvcg(parameters):  # PRESET AND SKILL GENERATOR
-    def isValidSkill(par):  # SKILL VALIDATOR
-        return (par[3] == 0 and par[4] == 0.0) or (par[3] != 0 and par[4] != 0.0)
-
-    def isValidPreset(par1, par2):  # PRESET VALIDATOR
-        return not (
-                (1 in par1 and 3 in par1) or
-                (par1.count(1) > 1) or
-                (par1.count(3) > 1) or
-                (par1.count(2) + par1.count(3) == len(par1))
-            ) and (par2[0] == 1)
-    
-    # Criando 5 skills, sendo 1 a1 e 4 a2
-    guide = ['a1', 'a2', 'a2', 'a2', 'a2']
-    skills = set()
-    
-    for g in guide:
-        skill = rcg(parameters['skill'][g])  # Gerando uma skill aleatória
-        while not isValidSkill(skill) or skill in skills:
-            skill = rcg(parameters['skill'][g])
-        skills.add(skill)
-
-    skills = list(skills)
-    
-    # Criando as duas partes do preset
-    preset1 = rcg(parameters['preset']['ps1'])
-    preset2 = rcg(parameters['preset']['ps2'])
-    
-    while not isValidPreset(preset1, preset2):
-        preset1 = rcg(parameters['preset']['ps1'])
-        preset2 = rcg(parameters['preset']['ps2'])
-
-    preset = [preset1, preset2, process_preset(preset1, preset2)]
-    skills.sort()
-    
-    return {'preset': preset, 'skills': skills}
-
-# ============================================= [ Presets DataBase ] ============================================= #
-def generate_combinations(parameters):
-    values = []
-    if isinstance(parameters, tuple):
-        return list(permutations(parameters))
-    
-    if isinstance(parameters, list) and len(parameters) > 1:
-        for param in parameters:
-            param_type = param['type']
-            range_values = param['range']
-            increment = param['increment']
-
-            if param_type == int:
-                values.append(np.arange(range_values[0], range_values[1] + 1, increment).tolist())
-            elif param_type == float:
-                values.append(np.round(np.arange(range_values[0], range_values[1] + increment, increment), 2).tolist())
-        return list(product(*values))
-
-    return None
-
-def initial_part_filter(combinations):
-    """
-    Filtra combinações com base nas regras fornecidas.
-    """
-    filtered = []
-    length = len(combinations[0])
-    for combination in combinations:
-        if 1 in combination and 3 in combination:
-            continue
-        if combination.count(1) > 1 or combination.count(3) > 1:
-            continue
-        if combination.count(2) + combination.count(3) == length:
-            continue
-        filtered.append(combination)
-    return filtered
-
-def process_preset(condition_list, value_list):
-    """
-    Processa as listas fornecidas e retorna uma lista contendo:
-    - o último índice de `condition_list` onde o valor é 1 ou 3,
-    - seguido pelos índices dos valores positivos no resultado da soma vetorial de `value_list` e `adjustments`.
-    """
-    # Inicialização de variáveis
-    adjustments = []
-    last_valid_index = None
-
-    # Preenchimento de `adjustments` e determinação de `last_valid_index` em uma única iteração
-    for index, value in enumerate(condition_list):
-        if value == 1 or value == 3:
-            last_valid_index = index
-        if value in (2, 3):
-            adjustments.append(-6)
-        else:
-            adjustments.append(0)
-
-    # Soma de vetores usando numpy arrays
-    result_list = np.array(value_list) + np.array(adjustments)
-
-    # Ordenar índices com base nos valores de result_list
-    sorted_indices = [i for i, value in sorted(enumerate(result_list), key=lambda x: x[1], reverse=True) if value > 0]
-
-    # Criar a lista final `final_result`
-    return tuple([last_valid_index] + sorted_indices)
-
-def generate_presets(parameters):
-    """
-    Gera os presets combinando e processando dados de `parameters`.
-    """
-    inits_combinations = generate_combinations(parameters['preset']['preset']['ps1'])
-    orders_combinations = generate_combinations(parameters['preset']['ps2'])
-    filtered_inits = initial_part_filter(inits_combinations)
-    filtered_orders = [c for c in orders_combinations if c[0] == 1]
-
-    presets = set()
-    for order in filtered_orders:
-        for init in filtered_inits:
-            presets.add(process_preset(init, order))
-    
-    return presets
-# ============================================= [ Testes ] ============================================= #
-clear_console()
-def testSkills(validations):
-    skills_values = rvcg(pfc)
-    v = 1
-    z = 0
-    while v <= validations:
-        print(f"Combinação aleatória nº {v}:")
-        myPrint_02(skills_values)
-        skills_values = rvcg(pfc)
-        v+=1
-        if z == 1:
-            while True:
-                user_input = input('Precione Enter para continuar')  # Aguarda o pressionamento de Enter
-                clear_console()
-                z=0
-                # Verifica se o usuário pressionou Enter (entrada vazia)
-                if user_input == "":
-                    break
-                # Aqui você pode adicionar a lógica que deseja executar dentro do loop
-        else:
-            z+=1
-
-
-testSkills(100)
-time.sleep(1)
+gen_test()
