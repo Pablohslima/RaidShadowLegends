@@ -1,5 +1,6 @@
 import numpy as np
 from itertools import permutations, product
+from collections import deque
 from printers import format_as_json
 import subprocess
 import random
@@ -28,11 +29,11 @@ def param_config(): # PARAMETERS FOR COMBINATION
         },
         'preset': {
             'ps1': [
-                {'type': int, 'range': (0, 1), 'increment': 1},             # Free or Opener
-                {'type': int, 'range': (0, 3), 'increment': 1},             # Free or Opener or Block or OpenerBlock
-                {'type': int, 'range': (0, 3), 'increment': 1},             # Free or Opener or Block or OpenerBlock
-                {'type': int, 'range': (0, 3), 'increment': 1},             # Free or Opener or Block or OpenerBlock
-                {'type': int, 'range': (0, 3), 'increment': 1}              # Free or Opener or Block or OpenerBlock
+                {'type': int, 'range': (0, 1), 'increment': 1}, # Free or Opener
+                {'type': int, 'range': (0, 3), 'increment': 1}, # Free or Opener or Block or OpenerBlock
+                {'type': int, 'range': (0, 3), 'increment': 1}, # Free or Opener or Block or OpenerBlock
+                {'type': int, 'range': (0, 3), 'increment': 1}, # Free or Opener or Block or OpenerBlock
+                {'type': int, 'range': (0, 3), 'increment': 1}  # Free or Opener or Block or OpenerBlock
             ],
             'ps2': (1, 2, 3, 4, 5)
         }
@@ -222,6 +223,8 @@ def rvcg_test(zf=0, validations=1000):
 class RandomGenerator:
     def __init__(self, config=None):
         self._config = config if isinstance(config, dict) else param_config()
+        self._current = ()
+        self._saved = deque(maxlen=10)
 
     def __getitem__(self, key):
         return self._config[key]
@@ -233,9 +236,28 @@ class RandomGenerator:
     def config(self):
         return self._config
 
-    def new(self): # RETURN A NEW SKILL PARAMETERS
-        return rvcg(self._config)
+    @property
+    def current(self):
+        return self._current
 
+    def new(self, quantity=1):
+        try:
+            if isinstance(quantity, (int, float)) and quantity >= 1:
+                self._current = [rvcg(self.config) for _ in range(int(quantity))]
+                if quantity == 1:
+                    return self._current[0]  # Retorna o único conjunto de parâmetros diretamente
+                else:
+                    return self._current  # Retorna a lista de conjuntos de parâmetros
+            else:
+                raise ValueError("Insira um valor válido para quantity (inteiro maior ou igual a 1).")
+        except ValueError as e:
+            print(e)
+            return None
+    
+    def save(self):
+        for index in self.current:
+            self._saved.append(index)
+        return tuple(self._saved)
     def test(self, max_combinations=100, pause_interval=1):
         """
         Gera e exibe uma série de combinações aleatórias até o limite definido,
@@ -259,14 +281,14 @@ class RandomGenerator:
 
             if pause_counter == pause_interval:
                 while continue_flag:
-                    user_input = input('Pressione Enter para continuar ou digite "QUIT" para sair: ').strip()
+                    user_input = input('Pressione ENTER para continuar ou digite "QUIT" para sair: ').strip()
                     clear_console()
                     pause_counter = 0
-
+                    
+                    if user_input == "":
+                        break
                     if user_input.upper() in {'QUIT', 'EXIT', 'OFF', 'Q'}:
                         continue_flag = False
-                        break
-                    elif user_input == "":
                         break
             else:
                 pause_counter += 1
@@ -274,5 +296,5 @@ class RandomGenerator:
         return None
 
 if __name__ == '__main__':
-    gen = RandomGenerator()
-    print(format_as_json(gen.new()))
+    rg = RandomGenerator()
+    print(rg.config)

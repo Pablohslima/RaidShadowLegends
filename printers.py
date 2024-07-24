@@ -67,6 +67,5 @@ if __name__ == "__main__":
         "skills": {"Python", "Java", "C++"}
     }
 
-    
     print("ISSO AQUI É COMPLETAMENTE DESNECESSÁRIO!!")
     print(format_as_json(data))

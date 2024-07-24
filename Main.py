@@ -59,17 +59,18 @@
             [x] Fifth Priority
 =====================================================================================================================================
 """
-
+from itertools import combinations, permutations, product
 from generator import RandomGenerator as RG
 
-import numpy as np
-from itertools import combinations, permutations, product
 import subprocess
 import random
+import numpy as np
 import time
 import json
 # ----------------------------------------------------------------------------------------------------------- #
+rg = RG()
 
+# ----------------------------------------------------------------------------------------------------------- #
 def prtit(iterable, group_size=5): # PRINT A iterable IN GROUPS OF group_size
     """
     Imprime elementos do iterável em grupos de tamanho especificado.
@@ -87,5 +88,3 @@ def prtit(iterable, group_size=5): # PRINT A iterable IN GROUPS OF group_size
         group = iterable_list[i:i + group_size]
         # Imprime o grupo
         print(group)
-
-RG().test()
