@@ -1,20 +1,13 @@
 import numpy as np
 from itertools import permutations, product
+from printers import format_as_json
 import subprocess
 import random
 
 # ================================================================================================================ #
 #                                                    Parameters
-def pfc(): # PARAMETERS FOR COMBINATION
+def param_config(): # PARAMETERS FOR COMBINATION
     return {
-        'skills': [
-            {'type': int, 'range': (0, 5), 'increment': 1},             # Countdown
-            {'type': int, 'range': (0, 1), 'increment': 1},             # Extra Turn
-            {'type': int, 'range': (0, 1), 'increment': 1},             # Buff Extend
-            {'type': int, 'range': (0, 3), 'increment': 1},             # Buff Turns
-            {'type': float, 'range': (0.0, 0.3), 'increment': 0.15},    # Speed Rate
-            {'type': float, 'range': (0.0, 1.0), 'increment': 0.05}     # Turn Meter Fill
-        ],
         'skill': {
             'a1': [
                 {'type': int, 'range': (0, 0), 'increment': 1},             # Countdown
@@ -77,7 +70,7 @@ def rcg(parameters): # RANDON COMBINATION GENERATOR
 
     return None
 
-def rvcg(parameters=pfc()):  # SKILL PRESET GENERATOR
+def rvcg(parameters=param_config()):  # SKILL PRESET GENERATOR
     def isValidSkill(par):  # SKILL VALIDATOR
         return (par[3] == 0 and par[4] == 0.0) or (par[3] != 0 and par[4] != 0.0)
 
@@ -199,44 +192,87 @@ def generate_presets(parameters):
 def clear_console():
     subprocess.run(['cls'], shell=True) 
 
-def myPrint_02(d):
-    # Função auxiliar para converter o dicionário para o formato desejado
-    def dict_to_json_str(d, indent=4):
-        json_str = "{\n"
-        for i, (key, value) in enumerate(d.items()):
-            json_str += f'{" " * indent}{repr(key)}: [\n'
-            for item in value:
-                json_str += f'{" " * (indent * 2)}{item},\n'
-            json_str = json_str.rstrip(',\n') + "\n"
-            json_str += f'{" " * indent}],\n'
-        json_str = json_str.rstrip(',\n') + "\n"
-        json_str += "}"
-        return json_str
-
-    print(dict_to_json_str(d))
-
-def gen_test(validations=1000):
+def rvcg_test(zf=0, validations=1000):
     clear_console()
-    parameters = pfc()
+    parameters = param_config()
     skills_values = rvcg()
     v = 1
     z = 0
-    while v <= validations:
+    flag = True
+    while v <= validations and flag:
         print(f"Combinação aleatória nº {v:05d}:")
-        myPrint_02(skills_values)
+        skill_print(skills_values)
         skills_values = rvcg()
         v+=1
-        if z == 1:
-            while True:
+        if z == zf:
+            while flag:
                 user_input = input('Pressione Enter para continuar')  # Aguarda o pressionamento de Enter
                 clear_console()
                 z=0
                 # Verifica se o usuário pressionou Enter (entrada vazia)
                 if user_input == "":
                     break
-                # Aqui você pode adicionar a lógica que deseja executar dentro do loop
+                if user_input.upper() in {'QUIT', 'EXIT', 'OFF', 'Q'}:
+                    flag = False
+                    break
         else:
             z+=1
+    return None
+
+class RandomGenerator:
+    def __init__(self, config=None):
+        self._config = config if isinstance(config, dict) else param_config()
+
+    def __getitem__(self, key):
+        return self._config[key]
+    
+    def __setitem__(self, key, value):
+        self._config[key] = value
+
+    @property
+    def config(self):
+        return self._config
+
+    def new(self): # RETURN A NEW SKILL PARAMETERS
+        return rvcg(self._config)
+
+    def test(self, max_combinations=100, pause_interval=1):
+        """
+        Gera e exibe uma série de combinações aleatórias até o limite definido,
+        pausando para entrada do usuário em intervalos definidos.
+
+        Parameters:
+        - max_combinations (int): O número máximo de combinações a serem geradas.
+        - pause_interval (int): O número de combinações entre pausas.
+        """
+        clear_console()
+        count = 1  # Contador de combinações
+        pause_counter = 0  # Contador para pausas
+        continue_flag = True  # Flag para controlar a continuidade do loop
+
+        while count <= max_combinations and continue_flag:
+            print(f"Combinação aleatória nº {count:05d}:")
+            print(
+                format_as_json(self.new())
+            )
+            count += 1
+
+            if pause_counter == pause_interval:
+                while continue_flag:
+                    user_input = input('Pressione Enter para continuar ou digite "QUIT" para sair: ').strip()
+                    clear_console()
+                    pause_counter = 0
+
+                    if user_input.upper() in {'QUIT', 'EXIT', 'OFF', 'Q'}:
+                        continue_flag = False
+                        break
+                    elif user_input == "":
+                        break
+            else:
+                pause_counter += 1
+
+        return None
 
 if __name__ == '__main__':
-    gen_test(100)
+    gen = RandomGenerator()
+    print(format_as_json(gen.new()))

@@ -60,7 +60,7 @@
 =====================================================================================================================================
 """
 
-from generator import rvcg as gen, gen_test
+from generator import RandomGenerator as RG
 
 import numpy as np
 from itertools import combinations, permutations, product
@@ -88,4 +88,4 @@ def prtit(iterable, group_size=5): # PRINT A iterable IN GROUPS OF group_size
         # Imprime o grupo
         print(group)
 
-gen_test()
+RG().test()
