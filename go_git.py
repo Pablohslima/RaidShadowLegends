@@ -9,5 +9,11 @@ def git_auto_push():
     except subprocess.CalledProcessError as e:
         print(f"Ocorreu um erro: {e}")
 
+
+"""
+============== Excluir alteraçoes realizadas no documento ==============
+    git checkout -- generator.py
+"""
+
 if __name__ == "__main__":
     git_auto_push()

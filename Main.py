@@ -100,20 +100,16 @@ def prtit(iterable, group_size=5): # PRINT A iterable IN GROUPS OF group_size
 
 """
 class Hero:
-    def __init__(self, speed, parameters, team=0):
+    def __init__(self, base, parameters, team=0):
         self._turn = 0
         self._team = team
         self._preset = parameters['preset'][2]
         self._skills = parameters['skills']
         self._countdowns = [0] * len(self._skills)
-        self._speed_base = speed * 0.0007
-        self._buffs = {
-            'speed': {
-                'rate': 0.0,
-                'turn': 0
-            }
-        }
-        self._speed = speed * 0.0007 + self._buffs['speed']['rate']
+        self._base = self.__base(base)
+        self._buffs = self.__buffs()
+        self._debuffs = self.__debuffs()
+        self._status = self.__status()
         self._turn_meter = 0.5
 
     def action(self):
@@ -148,9 +144,97 @@ class Hero:
         self._turn += 1
         self._countdowns = [c-1 if c > 0 else 0 for c in self._countdowns]
         return self._countdowns
-    
 
+    def __update_status(self):
+        self._status = {
+            'speed': self._base['speed'] * 0.0007 + self._buffs['speed']['rate'] + self._debuffs['speed']['rate']
+        }
+
+    def __base(self, base):
+        return {
+            'speed': base['speed']
+        }
     
+    def __buffs(self):
+        return {
+            'speed': {
+                'rate': 0.0,
+                'turn': 0
+            }
+        }
+    
+    def __debuffs(self):
+        return {
+            'speed': {
+                'rate': 0.0,
+                'turn': 0
+            }
+        }
+
+
+class StatusEffectManager:
+    def __init__(self):
+        self._active = {}
+
+    def extend(self, effect_type='positive'): # Ex: negative|positive
+        active = self._active
+        for effect in active:
+            if effect_type in effect:
+                effect[effect_type]['turn'] += 1
+        return active
+
+    def reduce(self, effect_type='positive'): # Ex: negative|positive
+        active = self._active
+        for effect in active:
+            if effect_type in effect:
+                if effect[effect_type]['turn'] == 1:
+                    del effect[effect_type]
+                else:
+                    effect[effect_type]['turn'] -= 1
+        return active
+
+    def clean(self, effect_type='positive'): # Ex: negative|positive
+        active = self._active
+        for effect in active:
+            if effect_type in effect:
+                del effect[effect_type]
+        return active
+
+    def add(self, *effects):  # Ex: ('speed', +-0.3, 2)
+        active = self._active
+        for effect in effects:
+            effect_name, rate, turns = effect
+            effect_type = 'positive' if rate > 0.0 else 'negative'
+
+            # Usar setdefault para garantir que as chaves existam
+            effect_data = active.setdefault(effect_name, {})\
+                .setdefault(effect_type, {'rate': 0.0, 'turn': 0, 'new': True})
+
+            # Atualizar somente se as novas condições forem melhores
+            if abs(rate) >= abs(effect_data['rate']) and turns >= effect_data['turn']:
+                effect_data.update({'rate': rate, 'turn': turns, 'new': True})
+        print(self._active)
+        return active
+
+    def _sum(self):
+        active = self._active
+        for effect in active:
+            value = 0.0
+            positivo = effect.get('positivo', 0) + 1
+            negativo = effect.get('negativo', 0) + 1
+
+
+active = {
+    'speed': {
+        'positivo': {
+            'rate': 0.3
+        },
+        'negativo': {
+            'rate': -0.3
+        }
+    }
+}
+
 par = {
     "preset": [
         (0, 0, 0, 1, 2),
