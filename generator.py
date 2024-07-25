@@ -19,7 +19,7 @@ def param_config(): # PARAMETERS FOR COMBINATION
                 {'type': float, 'range': (0.0, 0.1), 'increment': 0.05}     # Turn Meter Fill
             ],
             'a2': [
-                {'type': int, 'range': (1, 7), 'increment': 1},             # Countdown
+                {'type': int, 'range': (2, 7), 'increment': 1},             # Countdown
                 {'type': int, 'range': (0, 1), 'increment': 1},             # Extra Turn
                 {'type': int, 'range': (0, 1), 'increment': 1},             # Buff Extend
                 {'type': int, 'range': (0, 3), 'increment': 1},             # Buff Turns
@@ -153,7 +153,7 @@ def process_preset(condition_list, value_list):
     """
     # Inicialização de variáveis
     adjustments = []
-    last_valid_index = None
+    last_valid_index = -1
 
     # Preenchimento de `adjustments` e determinação de `last_valid_index` em uma única iteração
     for index, value in enumerate(condition_list):
@@ -223,21 +223,17 @@ def rvcg_test(zf=0, validations=1000):
 class RandomGenerator:
     def __init__(self, config=None):
         self._config = config if isinstance(config, dict) else param_config()
-        self._current = ()
-        self._saved = deque(maxlen=10)
+        self._current = []
 
     def __getitem__(self, key):
-        return self._config[key]
-    
-    def __setitem__(self, key, value):
-        self._config[key] = value
+        return self._current[key]
 
     @property
     def config(self):
         return self._config
 
     @property
-    def current(self):
+    def all(self):
         return self._current
 
     def new(self, quantity=1):
@@ -254,10 +250,6 @@ class RandomGenerator:
             print(e)
             return None
     
-    def save(self):
-        for index in self.current:
-            self._saved.append(index)
-        return tuple(self._saved)
     def test(self, max_combinations=100, pause_interval=1):
         """
         Gera e exibe uma série de combinações aleatórias até o limite definido,
@@ -274,9 +266,7 @@ class RandomGenerator:
 
         while count <= max_combinations and continue_flag:
             print(f"Combinação aleatória nº {count:05d}:")
-            print(
-                format_as_json(self.new())
-            )
+            print(format_as_json(self.new()))
             count += 1
 
             if pause_counter == pause_interval:
@@ -297,4 +287,4 @@ class RandomGenerator:
 
 if __name__ == '__main__':
     rg = RandomGenerator()
-    print(rg.config)
+    rg.test()

@@ -88,3 +88,100 @@ def prtit(iterable, group_size=5): # PRINT A iterable IN GROUPS OF group_size
         group = iterable_list[i:i + group_size]
         # Imprime o grupo
         print(group)
+"""
+    Hero.action
+        zerar turne metter
+        reduzir countdown de todas skills
+        reduzir duraçao dos buff ativos
+        identificar próxima skill
+        usar skill
+        atualizar countdown daquela skill
+        retornar informaçoes a serem atualizadas no time todo. nao esquecer do turno extra.
+
+"""
+class Hero:
+    def __init__(self, speed, parameters, team=0):
+        self._turn = 0
+        self._team = team
+        self._preset = parameters['preset'][2]
+        self._skills = parameters['skills']
+        self._countdowns = [0] * len(self._skills)
+        self._speed_base = speed * 0.0007
+        self._buffs = {
+            'speed': {
+                'rate': 0.0,
+                'turn': 0
+            }
+        }
+        self._speed = speed * 0.0007 + self._buffs['speed']['rate']
+        self._turn_meter = 0.5
+
+    def action(self):
+        skills = [self._next()]
+        if skills[1] > 0:
+            skills.append(self._next())
+
+        return {
+            'team': self._team,
+            'skills': skills
+        }
+
+    def _next(self):
+        countdowns = self._update_countdowns()
+        preset = self._preset
+        skills = self._skills
+        if self._turn == 1 and preset[0] != -1:
+            self._countdowns[preset[0]] = skills[preset[0]][0]
+            return skills[preset[0]]
+        
+        for el in preset[1:]:
+            if countdowns[el] == 0:
+                self._countdowns[el] = skills[el][0]
+                return skills[el]
+            else:
+                time.sleep(0)
+        print('Há um erro na lógica da função "next"')
+        return -100
+    
+    def _update_countdowns(self):
+        self._turn_meter = 0.0
+        self._turn += 1
+        self._countdowns = [c-1 if c > 0 else 0 for c in self._countdowns]
+        return self._countdowns
+    
+
+    
+par = {
+    "preset": [
+        (0, 0, 0, 1, 2),
+        (1, 5, 3, 4, 2),
+        (3, 1, 3, 2, 0)
+    ],
+    "skills": [
+        (0, 0, 0, 0, 0.0, 0.0),
+        (2, 1, 1, 1, 0.15, 0.2),
+        (3, 0, 0, 2, 0.15, 0.4),
+        (4, 0, 0, 1, 0.15, 0.3),
+        (6, 0, 1, 1, 0.3, 1.0)
+    ]
+}
+
+h = Hero(190, par)
+
+print(par['preset'][2])
+print(par['skills'])
+
+for i in range(1, 20):
+    print('Turno:', i, '->', 'Skill:', h.next())
+
+"""
+    "preset": [
+        (0, 2, 2, 0, 2),
+        (1, 2, 5, 4, 3),
+        (-1, 3, 0)
+    ]
+"""
+
+
+
+
