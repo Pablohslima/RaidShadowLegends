@@ -61,6 +61,7 @@
 """
 from itertools import combinations, permutations, product
 from generator import RandomGenerator as RG
+from collections import defaultdict
 
 import subprocess
 import random
@@ -172,56 +173,6 @@ class Hero:
         }
 
 
-class StatusEffectManager:
-    def __init__(self):
-        self._active = {}
-
-    def extend(self, effect_type='positive'): # Ex: negative|positive
-        active = self._active
-        for effect in active:
-            if effect_type in effect:
-                effect[effect_type]['turn'] += 1
-        return active
-
-    def reduce(self, effect_type='positive'): # Ex: negative|positive
-        active = self._active
-        for effect in active:
-            if effect_type in effect:
-                if effect[effect_type]['turn'] == 1:
-                    del effect[effect_type]
-                else:
-                    effect[effect_type]['turn'] -= 1
-        return active
-
-    def clean(self, effect_type='positive'): # Ex: negative|positive
-        active = self._active
-        for effect in active:
-            if effect_type in effect:
-                del effect[effect_type]
-        return active
-
-    def add(self, *effects):  # Ex: ('speed', +-0.3, 2)
-        active = self._active
-        for effect in effects:
-            effect_name, rate, turns = effect
-            effect_type = 'positive' if rate > 0.0 else 'negative'
-
-            # Usar setdefault para garantir que as chaves existam
-            effect_data = active.setdefault(effect_name, {})\
-                .setdefault(effect_type, {'rate': 0.0, 'turn': 0, 'new': True})
-
-            # Atualizar somente se as novas condições forem melhores
-            if abs(rate) >= abs(effect_data['rate']) and turns >= effect_data['turn']:
-                effect_data.update({'rate': rate, 'turn': turns, 'new': True})
-        print(self._active)
-        return active
-
-    def _sum(self):
-        active = self._active
-        for effect in active:
-            value = 0.0
-            positivo = effect.get('positivo', 0) + 1
-            negativo = effect.get('negativo', 0) + 1
 
 
 active = {
@@ -250,13 +201,6 @@ par = {
     ]
 }
 
-h = Hero(190, par)
-
-print(par['preset'][2])
-print(par['skills'])
-
-for i in range(1, 20):
-    print('Turno:', i, '->', 'Skill:', h.next())
 
 """
     "preset": [
