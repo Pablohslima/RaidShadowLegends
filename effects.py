@@ -25,11 +25,11 @@ class EffectManager:
     def negative(self):
         return self._negative
     
-    def insert(self, *effects): # tuple(stats, value, turn)
+    def insert(self, *effects): # dict {'stats', 'rate', 'turn', 'new', 'protected'}
         for effect in effects:
-            if effect[1] > 0:
+            if effect['rate'] > 0.0:
                 self._positive.insert(effect)
-            elif effect[1] < 0:
+            elif effect['rate'] < 0.0:
                 self._negative.insert(effect)
             else:
                 print(f'Invalid Effect: {effect}')
@@ -41,10 +41,16 @@ class EffectManager:
 
     def end(self): # Fim do turno
         self._positive.reduce_if(('new', False, True))
-        self._positive.change_all('new', False)
+        self._positive.to_old()
         return self
     
+    def print(self):
+        self._positive.print()
+        self._negative.print()
+        return self
+
     def __rate(self, effect): # Buff e Debuff somados
+        rate = 1.0
         rate *= self._positive[effect]
         rate *= self._negative[effect]
         return round(rate, 5)
@@ -53,6 +59,7 @@ class TypeEffect:
     def __init__(self, type):
         self._type = type
         self._effects = {}
+        self._new = set()
         self._print = False
 
     def __getitem__(self, stats):
@@ -105,18 +112,22 @@ class TypeEffect:
             del self._effects[key]
         return self.__print()
 
-    def change_all(self, key='new', value=False):
-        for effect in self._effects.values():
-            effect[key] = value
+    def to_old(self):
+        for effect in self._new:
+            self._effects[effect]['new'] = False
+
+        self._new = set()
         return self.__print()
 
     def clear(self):
         self._effects.clear()
         return self.__print()
 
-    def insert(self, *effects):  # tuple(stats, value, turn)
+    def insert(self, *effects): # dict {'stats', 'rate', 'turn', 'new', 'protected'}
         for effect in effects:
-            if len(effect) == 3 and isinstance(effect[1], (int, float)):
+            if isinstance(effect, dict):
+                if len(self._effects) == 10 and effect['stats'] not in self._effects:
+                    continue
                 self.__insert(effect)
             else:
                 print(f'Invalid Effect Format: {effect}')
@@ -127,17 +138,28 @@ class TypeEffect:
         print(f'{self.type} -> Modo print {"Ativo" if self._print else "Inativo"}!')
         return self
 
-    def __insert(self, effect):  # tuple(stats, rate, turns)
-        stats, rate, turns = effect
-        # Set default values for stats if not already present
-        current = self._effects.setdefault(stats, {'rate': 0.0, 'turn': 0, 'new': True})
+    def __insert(self, effect): # dict {'stats', 'rate', 'turn', 'new', 'protected'}
+        # Chaves padrão com seus valores iniciais
+        default_values = {'rate': 0.0, 'turn': 0, 'new': True, 'protected': False}
+        
+        # Mesclar o efeito recebido com os valores padrão
+        current = self._effects.setdefault(effect['stats'], default_values.copy())
         
         # Update if the new rate is greater or if the rate is the same but the turn count is higher
-        if (abs(rate) > abs(current['rate'])
-            or (abs(rate) == abs(current['rate']) and turns >= current['turn'])):
-            current.update({'rate': rate, 'turn': turns, 'new': True})
-        
-        # Print a atulização dos itens
+        if (
+            abs(effect['rate']) > abs(current['rate'])
+            or (
+                abs(effect['rate']) == abs(current['rate']) and effect['turn'] >= current['turn']
+            )
+        ):
+            current['rate'] = effect['rate']
+            current['turn'] = effect['turn']
+            current['new'] = effect.get('new', True)
+            current['protected'] = effect.get('protected', False)
+            if current['new']:
+                self._new.add(effect['stats'])
+
+        # Print a atualização dos itens
         return self.__print()
 
     def __print(self):
@@ -158,18 +180,17 @@ class TypeEffect:
 if __name__ == '__main__':
 
     te = TypeEffect('positive')
-    te.print().insert(
-        ('speed', 0.15, 4)
-    ).reduce_all().change_all(
-        *('new', False)
-    ).extend_all().reduce_if(
-        ('new', False, True)
-    ).insert(
-        ('speed', 0.3, 1)
-    ).reduce_all().insert(
-        ('speed', 0.3, 3)
+    em = EffectManager()
+    em.print().insert(
+        {'stats': 'speed', 'rate': 0.15, 'turn': 4, 'new': True, 'protected': False}
+    ).start().end()
+    em.positive.reduce_all()
+    em.insert(
+        {'stats': 'speed', 'rate': -0.30, 'turn': 3, 'new': True, 'protected': False}
     )
+    em.negative.extend_all()
     print("Propriedades:")
-    print('\ttype, item, value', '->', te.type, te['speed'], te.value)
-    print('')
-    te.clear().print()
+    print('\titem, value', '->', em['speed'], em.value)
+    em.positive.clear()
+    em.positive.clear()
+    em.print()
