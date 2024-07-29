@@ -58,7 +58,7 @@ class EffectManager:
 class TypeEffect:
     def __init__(self, type):
         self._type = type
-        self._effects = {}
+        self._effects = defaultdict(lambda: {'rate': 0.0, 'turn': 0, 'new': True, 'protected': False})
         self._new = set()
         self._print = False
 
@@ -72,12 +72,12 @@ class TypeEffect:
 
     @property
     def value(self):
-        return self._effects
+        return dict(self._effects)
 
     def extend_all(self):
         for effect in self._effects.values():
             effect['turn'] += 1
-        return self.__print()
+        return self._print_state()
     
     def extend_if(self, *args):  # args: tuples (key, val, cond)
         for effect in self._effects.values():
@@ -86,7 +86,7 @@ class TypeEffect:
                 for key, val, cond in args
             ):
                 effect['turn'] += 1
-        return self.__print()
+        return self._print_state()
 
     def reduce_all(self):
         to_delete = []
@@ -96,7 +96,7 @@ class TypeEffect:
                 to_delete.append(key)
         for key in to_delete:
             del self._effects[key]
-        return self.__print()
+        return self._print_state()
     
     def reduce_if(self, *args):  # args: tuples (key, val, cond)
         to_delete = []
@@ -110,18 +110,18 @@ class TypeEffect:
                     to_delete.append(key)
         for key in to_delete:
             del self._effects[key]
-        return self.__print()
+        return self._print_state()
 
     def to_old(self):
         for effect in self._new:
             self._effects[effect]['new'] = False
 
         self._new = set()
-        return self.__print()
+        return self._print_state()
 
     def clear(self):
         self._effects.clear()
-        return self.__print()
+        return self._print_state()
 
     def insert(self, *effects): # dict {'stats', 'rate', 'turn', 'new', 'protected'}
         for effect in effects:
@@ -137,44 +137,19 @@ class TypeEffect:
         self._print = not self._print
         print(f'{self.type} -> Modo print {"Ativo" if self._print else "Inativo"}!')
         return self
-
+# dict {'stats', 'rate', 'turn', 'new', 'protected'}
     def __insert(self, effect): # dict {'stats', 'rate', 'turn', 'new', 'protected'}
-        # Chaves padrão com seus valores iniciais
-        default_values = {'rate': 0.0, 'turn': 0, 'new': True, 'protected': False}
-        
-        # Mesclar o efeito recebido com os valores padrão
-        current = self._effects.setdefault(effect['stats'], default_values.copy())
-        
-        # Update if the new rate is greater or if the rate is the same but the turn count is higher
-        if (
-            abs(effect['rate']) > abs(current['rate'])
-            or (
-                abs(effect['rate']) == abs(current['rate']) and effect['turn'] >= current['turn']
-            )
-        ):
-            current['rate'] = effect['rate']
-            current['turn'] = effect['turn']
-            current['new'] = effect.get('new', True)
-            current['protected'] = effect.get('protected', False)
-            if current['new']:
+        current = self._effects[effect['stats']]
+        if abs(effect['rate']) > abs(current['rate']) or (abs(effect['rate']) == abs(current['rate']) and effect['turn'] >= current['turn']):
+            self._effects[effect['stats']].update(effect)
+            if effect.get('new', True):
                 self._new.add(effect['stats'])
+        return self._print_state()
 
-        # Print a atualização dos itens
-        return self.__print()
-
-    def __print(self):
+    def _print_state(self):
         if self._print:
-            # Obtém o quadro atual e o quadro do chamador
-            current_frame = inspect.currentframe()
-            caller_frame = current_frame.f_back
-            caller_function_name = caller_frame.f_code.co_name.center(10)
-
-            # Formata a mensagem para impressão
-            message = f"{self._type} -> {caller_function_name} -> {self._effects}"
-            
-            # Print the message
-            print(message)
-            
+            caller_function_name = inspect.stack()[1].function
+            print(f"{self._type} -> {caller_function_name.center(10)} -> {self.value}")
         return self
 
 if __name__ == '__main__':
@@ -192,5 +167,5 @@ if __name__ == '__main__':
     print("Propriedades:")
     print('\titem, value', '->', em['speed'], em.value)
     em.positive.clear()
-    em.positive.clear()
+    em.negative.clear()
     em.print()
