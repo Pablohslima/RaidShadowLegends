@@ -137,7 +137,7 @@ class TypeEffect:
         self._print = not self._print
         print(f'{self.type} -> Modo print {"Ativo" if self._print else "Inativo"}!')
         return self
-# dict {'stats', 'rate', 'turn', 'new', 'protected'}
+
     def __insert(self, effect): # dict {'stats', 'rate', 'turn', 'new', 'protected'}
         current = self._effects[effect['stats']]
         if abs(effect['rate']) > abs(current['rate']) or (abs(effect['rate']) == abs(current['rate']) and effect['turn'] >= current['turn']):
