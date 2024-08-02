@@ -1,7 +1,7 @@
 import numpy as np
 from itertools import permutations, product
 from collections import deque
-from printers import format_as_json
+from __printers import format_as_json
 import subprocess
 import random
 
